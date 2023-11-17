@@ -1,4 +1,5 @@
 """Installation script."""
+
 from os import path
 import sys
 from io import open
@@ -24,14 +25,13 @@ version = exec_results['version']
 
 setup(
     name='fuel',
-    version=version,  # PEP 440 compliant
+    version=version,
     description='Data pipeline framework for machine learning',
     long_description=LONG_DESCRIPTION,
     url='https://github.com/mila-udem/fuel.git',
-    download_url='https://github.com/mila-udem/fuel/tarball/v' + version,
+    download_url=f'https://github.com/mila-udem/fuel/tarball/v{version}',
     author='Universite de Montreal',
     license='MIT',
-    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -45,18 +45,35 @@ setup(
     ],
     keywords='dataset data iteration pipeline processing',
     packages=find_packages(exclude=['tests']),
-    install_requires=['numpy', 'six', 'picklable_itertools', 'pyyaml', 'h5py', 'tables',
-                      'progressbar2', 'pyzmq', 'scipy', 'pillow', 'requests'],
+    install_requires=[
+        'numpy',
+        'six',
+        'picklable_itertools',
+        'pyyaml',
+        'h5py',
+        'tables',
+        'progressbar2',
+        'pyzmq',
+        'scipy',
+        'pillow',
+        'requests',
+    ],
     extras_require={
         'test': ['mock', 'nose', 'nose2'],
-        'docs': ['sphinx', 'sphinx-rtd-theme']
+        'docs': ['sphinx', 'sphinx-rtd-theme'],
     },
     entry_points={
-        'console_scripts': ['fuel-convert = fuel.bin.fuel_convert:main',
-                            'fuel-download = fuel.bin.fuel_download:main',
-                            'fuel-info = fuel.bin.fuel_info:main']
+        'console_scripts': [
+            'fuel-convert = fuel.bin.fuel_convert:main',
+            'fuel-download = fuel.bin.fuel_download:main',
+            'fuel-info = fuel.bin.fuel_info:main',
+        ]
     },
-    ext_modules=[Extension("fuel.transformers._image",
-                           ["fuel/transformers/_image.c"],
-                           extra_compile_args=extra_compile_args)]
+    ext_modules=[
+        Extension(
+            "fuel.transformers._image",
+            ["fuel/transformers/_image.c"],
+            extra_compile_args=extra_compile_args,
+        )
+    ],
 )

@@ -276,7 +276,7 @@ def send_integers(socket, n):
 def receive_integers(socket):
     num = socket.recv_pyobj()
     total = 0
-    for i in range(num):
+    for _ in range(num):
         recv = socket.recv_pyobj()
         total += recv
     return total

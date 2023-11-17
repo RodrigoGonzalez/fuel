@@ -40,10 +40,12 @@ def check_exists(required_files):
             for filename in required_files:
                 if not os.path.isfile(os.path.join(directory, filename)):
                     missing.append(filename)
-            if len(missing) > 0:
+            if missing:
                 raise MissingInputFiles('Required files missing', missing)
             return f(directory, *args, **kwargs)
+
         return wrapped
+
     return function_wrapper
 
 
@@ -68,38 +70,32 @@ def fill_hdf5_file(h5file, data):
 
     """
     # Check that all sources for a split have the same length
-    split_names = set(split_tuple[0] for split_tuple in data)
+    split_names = {split_tuple[0] for split_tuple in data}
     for name in split_names:
         lengths = [len(split_tuple[2]) for split_tuple in data
                    if split_tuple[0] == name]
-        if not all(l == lengths[0] for l in lengths):
-            raise ValueError("split '{}' has sources that ".format(name) +
-                             "vary in length")
+        if any(l != lengths[0] for l in lengths):
+            raise ValueError(f"split '{name}' has sources that vary in length")
 
     # Initialize split dictionary
     split_dict = dict([(split_name, {}) for split_name in split_names])
 
     # Compute total source lengths and check that splits have the same dtype
     # across a source
-    source_names = set(split_tuple[1] for split_tuple in data)
+    source_names = {split_tuple[1] for split_tuple in data}
     for name in source_names:
         splits = [s for s in data if s[1] == name]
         indices = numpy.cumsum([0] + [len(s[2]) for s in splits])
-        if not all(s[2].dtype == splits[0][2].dtype for s in splits):
-            raise ValueError("source '{}' has splits that ".format(name) +
-                             "vary in dtype")
-        if not all(s[2].shape[1:] == splits[0][2].shape[1:] for s in splits):
-            raise ValueError("source '{}' has splits that ".format(name) +
-                             "vary in shapes")
+        if any(s[2].dtype != splits[0][2].dtype for s in splits):
+            raise ValueError(f"source '{name}' has splits that vary in dtype")
+        if any(s[2].shape[1:] != splits[0][2].shape[1:] for s in splits):
+            raise ValueError(f"source '{name}' has splits that vary in shapes")
         dataset = h5file.create_dataset(
             name, (sum(len(s[2]) for s in splits),) + splits[0][2].shape[1:],
             dtype=splits[0][2].dtype)
         dataset[...] = numpy.concatenate([s[2] for s in splits], axis=0)
         for i, j, s in zip(indices[:-1], indices[1:], splits):
-            if len(s) == 4:
-                split_dict[s[0]][name] = (i, j, None, s[3])
-            else:
-                split_dict[s[0]][name] = (i, j)
+            split_dict[s[0]][name] = (i, j, None, s[3]) if len(s) == 4 else (i, j)
     h5file.attrs['split'] = H5PYDataset.create_split_array(split_dict)
 
 
@@ -115,8 +111,14 @@ def progress_bar(name, maxval, prefix='Converting'):
         Total number of steps for the conversion.
 
     """
-    widgets = ['{} {}: '.format(prefix, name), Percentage(), ' ',
-               Bar(marker='=', left='[', right=']'), ' ', ETA()]
+    widgets = [
+        f'{prefix} {name}: ',
+        Percentage(),
+        ' ',
+        Bar(marker='=', left='[', right=']'),
+        ' ',
+        ETA(),
+    ]
     bar = ProgressBar(widgets=widgets, max_value=maxval, fd=sys.stdout).start()
     try:
         yield bar

@@ -6,10 +6,11 @@ def svhn_downloader(which_format, directory, clear=False):
     sets = ['train', 'test', 'extra']
     default_downloader(
         directory=directory,
-        urls=[None for f in sets],
-        filenames=['{}{}'.format(s, suffix) for s in sets],
+        urls=[None for _ in sets],
+        filenames=[f'{s}{suffix}' for s in sets],
         url_prefix='http://ufldl.stanford.edu/housenumbers/',
-        clear=clear)
+        clear=clear,
+    )
 
 
 def fill_subparser(subparser):

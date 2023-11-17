@@ -147,6 +147,9 @@ def test_sources_selection():
 
 
 def test_data_driven_epochs():
+
+
+
     class TestDataset(IterableDataset):
         sources = ('data',)
 
@@ -168,14 +171,11 @@ def test_data_driven_epochs():
                 return self.open()
 
         def get_data(self, state, request):
-            data = []
-            for i in range(request):
-                data.append(next(state[1]))
+            data = [next(state[1]) for _ in range(request)]
             return (data,)
 
-    epochs = []
-    epochs.append([([1],), ([2],), ([3],), ([4],)])
-    epochs.append([([5],), ([6],), ([7],), ([8],)])
+
+    epochs = [[([1],), ([2],), ([3],), ([4],)], [([5],), ([6],), ([7],), ([8],)]]
     stream = DataStream(TestDataset(), iteration_scheme=ConstantScheme(1))
     assert list(stream.get_epoch_iterator()) == epochs[0]
     assert list(stream.get_epoch_iterator()) == epochs[1]
@@ -185,15 +185,12 @@ def test_data_driven_epochs():
     for i, epoch in zip(range(2), stream.iterate_epochs()):
         assert list(epoch) == epochs[i]
 
-    # test scheme resetting between epochs
     class TestScheme(BatchSizeScheme):
 
         def get_request_iterator(self):
             return iter([1, 2, 1, 3])
 
-    epochs = []
-    epochs.append([([1],), ([2, 3],), ([4],)])
-    epochs.append([([5],), ([6, 7],), ([8],)])
+    epochs = [[([1],), ([2, 3],), ([4],)], [([5],), ([6, 7],), ([8],)]]
     stream = DataStream(TestDataset(), iteration_scheme=TestScheme())
     for i, epoch in zip(range(2), stream.iterate_epochs()):
         assert list(epoch) == epochs[i]

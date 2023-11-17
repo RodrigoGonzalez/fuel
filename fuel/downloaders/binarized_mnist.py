@@ -18,8 +18,10 @@ def fill_subparser(subparser):
 
     """
     sets = ['train', 'valid', 'test']
-    urls = ['http://www.cs.toronto.edu/~larocheh/public/datasets/' +
-            'binarized_mnist/binarized_mnist_{}.amat'.format(s) for s in sets]
-    filenames = ['binarized_mnist_{}.amat'.format(s) for s in sets]
+    urls = [
+        f'http://www.cs.toronto.edu/~larocheh/public/datasets/binarized_mnist/binarized_mnist_{s}.amat'
+        for s in sets
+    ]
+    filenames = [f'binarized_mnist_{s}.amat' for s in sets]
     subparser.set_defaults(urls=urls, filenames=filenames)
     return default_downloader

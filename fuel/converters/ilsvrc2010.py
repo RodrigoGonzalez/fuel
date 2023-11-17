@@ -155,20 +155,21 @@ def prepare_metadata(devkit_archive, test_groundtruth_path):
     # Ascertain the number of filenames to prepare appropriate sized
     # arrays.
     n_train = int(synsets['num_train_images'].sum())
-    log.info('Training set: {} images'.format(n_train))
-    log.info('Validation set: {} images'.format(len(valid_groundtruth)))
-    log.info('Test set: {} images'.format(len(test_groundtruth)))
+    log.info(f'Training set: {n_train} images')
+    log.info(f'Validation set: {len(valid_groundtruth)} images')
+    log.info(f'Test set: {len(test_groundtruth)} images')
     n_total = n_train + len(valid_groundtruth) + len(test_groundtruth)
-    log.info('Total (train/valid/test): {} images'.format(n_total))
+    log.info(f'Total (train/valid/test): {n_total} images')
     return n_train, valid_groundtruth, test_groundtruth, wnid_map
 
 
 def create_splits(n_train, n_valid, n_test):
     n_total = n_train + n_valid + n_test
-    tuples = {}
-    tuples['train'] = (0, n_train)
-    tuples['valid'] = (n_train, n_train + n_valid)
-    tuples['test'] = (n_train + n_valid, n_total)
+    tuples = {
+        'train': (0, n_train),
+        'valid': (n_train, n_train + n_valid),
+        'test': (n_train + n_valid, n_total),
+    }
     sources = ['encoded_images', 'targets', 'filenames']
     return OrderedDict(
         (split, OrderedDict((source, tuples[split]) for source in sources))

@@ -189,7 +189,7 @@ def convert_celeba(which_format, directory, output_directory,
         raise ValueError("CelebA format needs to be either "
                          "'aligned_cropped' or '64'.")
     if not output_filename:
-        output_filename = 'celeba_{}.hdf5'.format(which_format)
+        output_filename = f'celeba_{which_format}.hdf5'
     if which_format == 'aligned_cropped':
         return convert_celeba_aligned_cropped(
             directory, output_directory, output_filename)

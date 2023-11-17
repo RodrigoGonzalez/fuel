@@ -27,19 +27,20 @@ def _make_dummy_data(output_directory):
     Image.new('RGB', (1, 1)).save(data, 'JPEG')
     image = data.getvalue()
 
-    output_files = [os.path.join(output_directory,
-                                 'dogs_vs_cats.{}.zip'.format(set_))
-                    for set_ in ['train', 'test1']]
+    output_files = [
+        os.path.join(output_directory, f'dogs_vs_cats.{set_}.zip')
+        for set_ in ['train', 'test1']
+    ]
     with zipfile.ZipFile(output_files[0], 'w') as zip_file:
         zif = zipfile.ZipInfo('train/')
         zip_file.writestr(zif, "")
         for i in range(25000):
-            zip_file.writestr('train/cat.{}.jpeg'.format(i), image)
+            zip_file.writestr(f'train/cat.{i}.jpeg', image)
     with zipfile.ZipFile(output_files[1], 'w') as zip_file:
         zif = zipfile.ZipInfo('test1/')
         zip_file.writestr(zif, "")
         for i in range(12500):
-            zip_file.writestr('test1/{}.jpeg'.format(i), image)
+            zip_file.writestr(f'test1/{i}.jpeg', image)
 
 
 def teardown():
@@ -60,8 +61,7 @@ def _test_conversion():
     with h5py.File(output_file, 'r') as h5:
         assert numpy.all(h5['targets'][:25000] == 0)
         assert numpy.all(h5['targets'][25000:] == 1)
-        assert numpy.all(numpy.array(
-            [img for img in h5['image_features'][:]]) == 0)
+        assert numpy.all(numpy.array(list(h5['image_features'][:])) == 0)
         assert numpy.all(h5['image_features_shapes'][:, 0] == 3)
         assert numpy.all(h5['image_features_shapes'][:, 1:] == 1)
 

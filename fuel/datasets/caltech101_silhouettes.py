@@ -28,7 +28,7 @@ class CalTech101Silhouettes(H5PYDataset):
         if size not in (16, 28):
             raise ValueError('size must be 16 or 28')
 
-        self.filename = 'caltech101_silhouettes{}.hdf5'.format(size)
+        self.filename = f'caltech101_silhouettes{size}.hdf5'
         super(CalTech101Silhouettes, self).__init__(
             self.data_path, which_sets=which_sets,
             load_in_memory=load_in_memory, **kwargs)

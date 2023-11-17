@@ -15,9 +15,9 @@ from fuel.converters.base import fill_hdf5_file, check_exists, progress_bar
 from fuel.datasets import H5PYDataset
 
 
-FORMAT_1_FILES = ['{}.tar.gz'.format(s) for s in ['train', 'test', 'extra']]
+FORMAT_1_FILES = [f'{s}.tar.gz' for s in ['train', 'test', 'extra']]
 FORMAT_1_TRAIN_FILE, FORMAT_1_TEST_FILE, FORMAT_1_EXTRA_FILE = FORMAT_1_FILES
-FORMAT_2_FILES = ['{}_32x32.mat'.format(s) for s in ['train', 'test', 'extra']]
+FORMAT_2_FILES = [f'{s}_32x32.mat' for s in ['train', 'test', 'extra']]
 FORMAT_2_TRAIN_FILE, FORMAT_2_TEST_FILE, FORMAT_2_EXTRA_FILE = FORMAT_2_FILES
 
 
@@ -194,6 +194,7 @@ def convert_svhn_format_1(directory, output_directory,
                         # boxes in the corresponding image, and one column.
                         def get_dataset(name):
                             return main_group[image_reference][name][:, 0]
+
                         names = ('label', 'height', 'width', 'left', 'top')
                         datasets = dict(
                             [(name, get_dataset(name)) for name in names])
@@ -210,10 +211,14 @@ def convert_svhn_format_1(directory, output_directory,
                                         for reference in dataset]
                             else:
                                 return [int(dataset[0])]
+
                         # Names are pluralized in the BoundingBox named tuple.
                         kwargs = dict(
-                            [(name + 's', get_elements(dataset))
-                             for name, dataset in iteritems(datasets)])
+                            [
+                                (f'{name}s', get_elements(dataset))
+                                for name, dataset in iteritems(datasets)
+                            ]
+                        )
                         boxes.append(BoundingBoxes(**kwargs))
                         if bar:
                             bar.update(image_number)
@@ -360,7 +365,7 @@ def convert_svhn(which_format, directory, output_directory,
     if which_format not in (1, 2):
         raise ValueError("SVHN format needs to be either 1 or 2.")
     if not output_filename:
-        output_filename = 'svhn_format_{}.hdf5'.format(which_format)
+        output_filename = f'svhn_format_{which_format}.hdf5'
     if which_format == 1:
         return convert_svhn_format_1(
             directory, output_directory, output_filename)

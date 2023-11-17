@@ -59,10 +59,7 @@ def convert_mnist(directory, output_directory, output_filename=None,
 
     """
     if not output_filename:
-        if dtype:
-            output_filename = 'mnist_{}.hdf5'.format(dtype)
-        else:
-            output_filename = 'mnist.hdf5'
+        output_filename = f'mnist_{dtype}.hdf5' if dtype else 'mnist.hdf5'
     output_path = os.path.join(output_directory, output_filename)
     h5file = h5py.File(output_path, mode='w')
 

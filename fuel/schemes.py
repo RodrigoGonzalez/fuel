@@ -85,10 +85,7 @@ class BatchScheme(IterationScheme):
     requests_examples = False
 
     def __init__(self, examples, batch_size):
-        if isinstance(examples, Iterable):
-            self.indices = examples
-        else:
-            self.indices = xrange(examples)
+        self.indices = examples if isinstance(examples, Iterable) else xrange(examples)
         self.batch_size = batch_size
 
 
@@ -111,7 +108,7 @@ class ConcatenatedScheme(IterationScheme):
 
     """
     def __init__(self, schemes):
-        if not len(set(scheme.requests_examples for scheme in schemes)) == 1:
+        if len({scheme.requests_examples for scheme in schemes}) != 1:
             raise ValueError('all schemes must produce the same type of '
                              'requests (batches or examples)')
         self.schemes = schemes
@@ -135,10 +132,7 @@ class IndexScheme(IterationScheme):
     requests_examples = True
 
     def __init__(self, examples):
-        if isinstance(examples, Iterable):
-            self.indices = examples
-        else:
-            self.indices = xrange(examples)
+        self.indices = examples if isinstance(examples, Iterable) else xrange(examples)
 
 
 class ConstantScheme(BatchSizeScheme):

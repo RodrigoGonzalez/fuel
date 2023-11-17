@@ -56,12 +56,9 @@ class ImagesFromBytes(SourcewiseTransformer):
         self.color_mode = color_mode
 
     def transform_source_example(self, example, source_name):
-        if PY3:
-            bytes_type = bytes
-        else:
-            bytes_type = str
+        bytes_type = bytes if PY3 else str
         if not isinstance(example, bytes_type):
-            raise TypeError("expected {} object".format(bytes_type.__name__))
+            raise TypeError(f"expected {bytes_type.__name__} object")
         pil_image = Image.open(BytesIO(example))
         if self.color_mode is not None:
             pil_image = pil_image.convert(self.color_mode)
@@ -131,7 +128,7 @@ class MinimumImageDimensions(SourcewiseTransformer, ExpectsAxisLabels):
         try:
             self.resample = getattr(Image, resample.upper())
         except AttributeError:
-            raise ValueError("unknown resampling filter '{}'".format(resample))
+            raise ValueError(f"unknown resampling filter '{resample}'")
         kwargs.setdefault('produces_examples', data_stream.produces_examples)
         kwargs.setdefault('axis_labels', data_stream.axis_labels)
         super(MinimumImageDimensions, self).__init__(data_stream, **kwargs)
@@ -157,10 +154,7 @@ class MinimumImageDimensions(SourcewiseTransformer, ExpectsAxisLabels):
             dt = example.dtype
             # If we're dealing with a colour image, swap around the axes
             # to be in the format that PIL needs.
-            if example.ndim == 3:
-                im = example.transpose(1, 2, 0)
-            else:
-                im = example
+            im = example.transpose(1, 2, 0) if example.ndim == 3 else example
             im = Image.fromarray(im)
             width, height = im.size
             multiplier = max(1, min_width / width, min_height / height)
@@ -168,10 +162,7 @@ class MinimumImageDimensions(SourcewiseTransformer, ExpectsAxisLabels):
             height = int(math.ceil(height * multiplier))
             im = numpy.array(im.resize((width, height))).astype(dt)
             # If necessary, undo the axis swap from earlier.
-            if im.ndim == 3:
-                example = im.transpose(2, 0, 1)
-            else:
-                example = im
+            example = im.transpose(2, 0, 1) if im.ndim == 3 else im
         return example
 
 
@@ -230,9 +221,9 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
             max_h_off = image_height - windowed_height
             max_w_off = image_width - windowed_width
             if max_h_off < 0 or max_w_off < 0:
-                raise ValueError("Got ndarray batch with image dimensions {} "
-                                 "but requested window shape of {}".format(
-                                     source.shape[2:], self.window_shape))
+                raise ValueError(
+                    f"Got ndarray batch with image dimensions {source.shape[2:]} but requested window shape of {self.window_shape}"
+                )
             offsets_w = self.rng.random_integers(0, max_w_off, size=batch_size)
             offsets_h = self.rng.random_integers(0, max_h_off, size=batch_size)
             window_batch_bchw(source, offsets_h, offsets_w, out)
@@ -255,10 +246,9 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
                              "ndarray with ndim = 3")
         image_height, image_width = example.shape[1:]
         if image_height < windowed_height or image_width < windowed_width:
-            raise ValueError("can't obtain ({}, {}) window from image "
-                             "dimensions ({}, {})".format(
-                                 windowed_height, windowed_width,
-                                 image_height, image_width))
+            raise ValueError(
+                f"can't obtain ({windowed_height}, {windowed_width}) window from image dimensions ({image_height}, {image_width})"
+            )
         if image_height - windowed_height > 0:
             off_h = self.rng.random_integers(0, image_height - windowed_height)
         else:
@@ -312,7 +302,7 @@ class Random2DRotation(SourcewiseTransformer, ExpectsAxisLabels):
         try:
             self.resample = getattr(Image, resample.upper())
         except AttributeError:
-            raise ValueError("unknown resampling filter '{}'".format(resample))
+            raise ValueError(f"unknown resampling filter '{resample}'")
 
         self.rng = kwargs.pop('rng', None)
         self.warned_axis_labels = False

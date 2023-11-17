@@ -18,7 +18,7 @@ class CheckDirectoryAction(argparse.Action):
         if os.path.isdir(values):
             setattr(namespace, self.dest, values)
         else:
-            raise ValueError('{} is not a existing directory'.format(values))
+            raise ValueError(f'{values} is not a existing directory')
 
 
 def main(args=None):
@@ -39,7 +39,7 @@ def main(args=None):
         for name in fuel.config.extra_converters:
             extra_datasets = dict(
                 importlib.import_module(name).all_converters)
-            if any(key in built_in_datasets for key in extra_datasets.keys()):
+            if any(key in built_in_datasets for key in extra_datasets):
                 raise ValueError('extra converters conflict in name with '
                                  'built-in converters')
             built_in_datasets.update(extra_datasets)
@@ -53,8 +53,8 @@ def main(args=None):
     convert_functions = {}
     for name, fill_subparser in built_in_datasets.items():
         subparser = subparsers.add_parser(
-            name, parents=[parent_parser],
-            help='Convert the {} dataset'.format(name))
+            name, parents=[parent_parser], help=f'Convert the {name} dataset'
+        )
         subparser.add_argument(
             "-o", "--output-directory", help="where to save the dataset",
             type=str, default=os.getcwd(), action=CheckDirectoryAction)
@@ -79,8 +79,10 @@ def main(args=None):
         output_paths = convert_function(**args_dict)
     except MissingInputFiles as e:
         intro = "The following required files were not found:\n"
-        message = "\n".join([intro] + ["   * " + f for f in e.filenames])
-        message += "\n\nDid you forget to run fuel-download?"
+        message = (
+            "\n".join([intro] + [f"   * {f}" for f in e.filenames])
+            + "\n\nDid you forget to run fuel-download?"
+        )
         parser.error(message)
 
     # Tag the newly-created file(s) with H5PYDataset version and command-line

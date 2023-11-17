@@ -100,13 +100,10 @@ def refresh_lock(lock_file):
     returned.
 
     """
-    unique_id = '%s_%s_%s' % (
-        os.getpid(),
-        ''.join([str(random.randint(0, 9)) for i in range(10)]), hostname)
+    unique_id = f"{os.getpid()}_{''.join([str(random.randint(0, 9)) for _ in range(10)])}_{hostname}"
     try:
-        lock_write = open(lock_file, 'w')
-        lock_write.write(unique_id + '\n')
-        lock_write.close()
+        with open(lock_file, 'w') as lock_write:
+            lock_write.write(unique_id + '\n')
     except Exception:
         # In some strange case, this happen.  To prevent all tests
         # from failing, we release the lock, but as there is a
@@ -220,7 +217,7 @@ def lock(tmp_dir, timeout=NOT_SET, min_wait=None, max_wait=None, verbosity=1):
                     read_owner = 'failure'
                 if other_dead:
                     if not no_display:
-                        msg = "process '%s'" % read_owner.split('_')[0]
+                        msg = f"process '{read_owner.split('_')[0]}'"
                         logger.warning("Overriding existing lock by dead %s "
                                        "(I am process '%s')", msg, my_pid)
                     get_lock.unlocker.unlock()
@@ -233,7 +230,7 @@ def lock(tmp_dir, timeout=NOT_SET, min_wait=None, max_wait=None, verbosity=1):
                             if read_owner == 'failure':
                                 msg = 'unknown process'
                             else:
-                                msg = "process '%s'" % read_owner.split('_')[0]
+                                msg = f"process '{read_owner.split('_')[0]}'"
                             logger.warning("Overriding existing lock by %s "
                                            "(I am process '%s')", msg, my_pid)
                         get_lock.unlocker.unlock()
@@ -246,7 +243,7 @@ def lock(tmp_dir, timeout=NOT_SET, min_wait=None, max_wait=None, verbosity=1):
                     if read_owner == 'failure':
                         msg = 'unknown process'
                     else:
-                        msg = "process '%s'" % read_owner.split('_')[0]
+                        msg = f"process '{read_owner.split('_')[0]}'"
                     logger.info("Waiting for existing lock by %s (I am "
                                 "process '%s')", msg, my_pid)
                     logger.info("To manually release the lock, delete %s",
@@ -318,17 +315,15 @@ def get_lock(lock_dir, **kw):
             get_lock.lock_is_enabled = True
         get_lock.lock_dir = lock_dir
         get_lock.unlocker = Unlocker(get_lock.lock_dir)
-    else:
-        if lock_dir != get_lock.lock_dir:
-            # Compilation directory has changed.
-            # First ensure all old locks were released.
-            assert get_lock.n_lock == 0
-            # Update members for new compilation directory.
-            get_lock.lock_dir = lock_dir
-            get_lock.unlocker = Unlocker(get_lock.lock_dir)
+    elif lock_dir != get_lock.lock_dir:
+        # Compilation directory has changed.
+        # First ensure all old locks were released.
+        assert get_lock.n_lock == 0
+        # Update members for new compilation directory.
+        get_lock.lock_dir = lock_dir
+        get_lock.unlocker = Unlocker(get_lock.lock_dir)
 
     if get_lock.lock_is_enabled:
-        # Only really try to acquire the lock if we do not have it already.
         if get_lock.n_lock == 0:
             lock(get_lock.lock_dir, **kw)
             atexit.register(Unlocker.unlock, get_lock.unlocker)
@@ -381,7 +376,7 @@ def get_writelock(filename):
     # file, we will have to ask write lock for a folder with a different
     # name from the file we want a lock on or else write lock will
     # try to create a folder with the same name as the file
-    get_lock(filename + ".writelock")
+    get_lock(f"{filename}.writelock")
 
 
 def release_writelock():

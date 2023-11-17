@@ -85,10 +85,10 @@ class TestImagesFromBytes(ImageTestingMixin):
                                  which_sources=('source1', 'source2'),
                                  color_mode=None)
         s1, s2 = list(zip(*list(stream.get_epoch_iterator())))
-        s1_shape = set(s.shape for s in s1)
-        s2_shape = set(s.shape for s in s2)
-        actual_s1 = set(reorder_axes(s) for s in self.shapes[:3])
-        actual_s2 = set(reorder_axes(s) for s in self.shapes[3:])
+        s1_shape = {s.shape for s in s1}
+        s2_shape = {s.shape for s in s2}
+        actual_s1 = {reorder_axes(s) for s in self.shapes[:3]}
+        actual_s2 = {reorder_axes(s) for s in self.shapes[3:]}
         assert actual_s1 == s1_shape
         assert actual_s2 == s2_shape
 
@@ -99,10 +99,10 @@ class TestImagesFromBytes(ImageTestingMixin):
         s1, s2 = list(zip(*list(stream.get_epoch_iterator())))
         s1 = sum(s1, [])
         s2 = sum(s2, [])
-        s1_shape = set(s.shape for s in s1)
-        s2_shape = set(s.shape for s in s2)
-        actual_s1 = set(reorder_axes(s) for s in self.shapes[:3])
-        actual_s2 = set(reorder_axes(s) for s in self.shapes[3:])
+        s1_shape = {s.shape for s in s1}
+        s2_shape = {s.shape for s in s2}
+        actual_s1 = {reorder_axes(s) for s in self.shapes[:3]}
+        actual_s2 = {reorder_axes(s) for s in self.shapes[3:]}
         assert actual_s1 == s1_shape
         assert actual_s2 == s2_shape
 
@@ -112,8 +112,8 @@ class TestImagesFromBytes(ImageTestingMixin):
                                  color_mode='RGB')
         s1, s2 = list(zip(*list(stream.get_epoch_iterator())))
         actual_s1_gen = (reorder_axes(s) for s in self.shapes[:3])
-        actual_s1 = set((3,) + s[1:] for s in actual_s1_gen)
-        s1_shape = set(s.shape for s in s1)
+        actual_s1 = {(3,) + s[1:] for s in actual_s1_gen}
+        s1_shape = {s.shape for s in s1}
         assert actual_s1 == s1_shape
 
     def test_images_from_bytes_example_stream_convert_l(self):
@@ -122,8 +122,8 @@ class TestImagesFromBytes(ImageTestingMixin):
                                  color_mode='L')
         s1, s2 = list(zip(*list(stream.get_epoch_iterator())))
         actual_s2_gen = (reorder_axes(s) for s in self.shapes[3:])
-        actual_s2 = set((1,) + s[1:] for s in actual_s2_gen)
-        s2_shape = set(s.shape for s in s2)
+        actual_s2 = {(1,) + s[1:] for s in actual_s2_gen}
+        s2_shape = {s.shape for s in s2}
         assert actual_s2 == s2_shape
 
     def test_axis_labels(self):
@@ -152,7 +152,7 @@ class TestMinimumDimensions(ImageTestingMixin):
         source2 = []
         source3 = []
         self.shapes = [(5, 9), (4, 6), (4, 3), (6, 4), (2, 5), (4, 8), (8, 3)]
-        for i, shape in enumerate(self.shapes):
+        for shape in self.shapes:
             source1.append(rng.normal(size=shape))
             source2.append(rng.normal(size=shape[::-1]))
             source3.append(rng.random_integers(0, 255, size=(3,) + shape)
@@ -254,7 +254,7 @@ class TestFixedSizeRandomCrop(ImageTestingMixin):
                     assert example.shape == (2, 5, 4)
                     seen_indices = numpy.union1d(seen_indices,
                                                  example.flatten())
-                assert len(batch[1]) in (1, 2)
+                assert len(batch[1]) in {1, 2}
             if self.source2_biggest == len(seen_indices):
                 break
         else:

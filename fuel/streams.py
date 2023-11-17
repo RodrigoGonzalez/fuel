@@ -51,20 +51,18 @@ class AbstractDataStream(object):
         if self.iteration_scheme:
             return self.iteration_scheme.requests_examples
         elif not hasattr(self, '_produces_examples'):
-            raise ValueError("cannot infer type of stream for {} instance; "
-                             "set the produces_examples attribute to True "
-                             "(for example streams) or False (for batch "
-                             "streams).".format(self.__class__.__name__))
+            raise ValueError(
+                f"cannot infer type of stream for {self.__class__.__name__} instance; set the produces_examples attribute to True (for example streams) or False (for batch streams)."
+            )
         else:
             return self._produces_examples
 
     @produces_examples.setter
     def produces_examples(self, value):
         if self.iteration_scheme:
-            raise ValueError("cannot set produces_examples on {} instance; "
-                             "determined by iteration scheme {}".format(
-                                 self.__class__.__name__,
-                                 self.iteration_scheme))
+            raise ValueError(
+                f"cannot set produces_examples on {self.__class__.__name__} instance; determined by iteration scheme {self.iteration_scheme}"
+            )
         self._produces_examples = value
 
     def get_data(self, request=None):
@@ -147,9 +145,7 @@ class DataStream(AbstractDataStream):
 
     @property
     def sources(self):
-        if hasattr(self, '_sources'):
-            return self._sources
-        return self.dataset.sources
+        return self._sources if hasattr(self, '_sources') else self.dataset.sources
 
     @sources.setter
     def sources(self, value):
@@ -225,7 +221,7 @@ class ServerDataStream(AbstractDataStream):
         context = zmq.Context()
         self.socket = socket = context.socket(zmq.PULL)
         socket.set_hwm(self.hwm)
-        socket.connect("tcp://{}:{}".format(self.host, self.port))
+        socket.connect(f"tcp://{self.host}:{self.port}")
         self.connected = True
 
     def get_data(self, request=None):

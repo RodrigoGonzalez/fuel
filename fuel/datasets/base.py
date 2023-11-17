@@ -64,17 +64,16 @@ class Dataset(object):
         if not self.provides_sources:
             raise ValueError("dataset does not have `provides_sources`")
         if sources is not None:
-            if not sources or not all(source in self.provides_sources
-                                      for source in sources):
+            if not sources or any(
+                source not in self.provides_sources for source in sources
+            ):
                 raise ValueError("unable to provide requested sources")
             self.sources = sources
         self.axis_labels = axis_labels
 
     @property
     def sources(self):
-        if not hasattr(self, '_sources'):
-            return self.provides_sources
-        return self._sources
+        return self._sources if hasattr(self, '_sources') else self.provides_sources
 
     @sources.setter
     def sources(self, sources):
@@ -237,8 +236,9 @@ class Dataset(object):
         (array([-1.82436737,  0.08265948,  0.63206168]),)
 
         """
-        return tuple([d for d, s in zip(data, self.provides_sources)
-                      if s in self.sources])
+        return tuple(
+            d for d, s in zip(data, self.provides_sources) if s in self.sources
+        )
 
 
 class IterableDataset(Dataset):
@@ -285,12 +285,12 @@ class IterableDataset(Dataset):
                        for iterable in iterables.values()):
                 raise ValueError
             self.iterables = [iterables[source] for source in self.sources]
-        else:
-            if not isinstance(iterables, collections.Iterable):
-                raise ValueError
+        elif isinstance(iterables, collections.Iterable):
             self.iterables = [iterables]
+        else:
+            raise ValueError
         try:
-            if len(set(len(iterable) for iterable in self.iterables)) != 1:
+            if len({len(iterable) for iterable in self.iterables}) != 1:
                 raise ValueError("iterables are of different length")
         except TypeError:
             pass
@@ -298,7 +298,7 @@ class IterableDataset(Dataset):
     @property
     def num_examples(self):
         try:
-            num_examples, = set(len(iterable) for iterable in self.iterables)
+            num_examples, = {len(iterable) for iterable in self.iterables}
             return num_examples
         except TypeError:
             return float('nan')
@@ -351,8 +351,10 @@ class IndexableDataset(Dataset):
         if isinstance(indexables, dict):
             self.indexables = [indexables[source][start:stop]
                                for source in self.sources]
-            if not all(len(indexable) == len(self.indexables[0])
-                       for indexable in self.indexables):
+            if any(
+                len(indexable) != len(self.indexables[0])
+                for indexable in self.indexables
+            ):
                 raise ValueError("sources have different lengths")
         else:
             self.indexables = [indexables]

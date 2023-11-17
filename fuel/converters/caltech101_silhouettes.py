@@ -24,10 +24,10 @@ def convert_silhouettes(size, directory, output_directory,
         raise ValueError('size must be 16 or 28')
 
     if output_filename is None:
-        output_filename = 'caltech101_silhouettes{}.hdf5'.format(size)
+        output_filename = f'caltech101_silhouettes{size}.hdf5'
     output_file = os.path.join(output_directory, output_filename)
 
-    input_file = 'caltech101_silhouettes_{}_split1.mat'.format(size)
+    input_file = f'caltech101_silhouettes_{size}_split1.mat'
     input_file = os.path.join(directory, input_file)
 
     if not os.path.isfile(input_file):

@@ -219,16 +219,15 @@ def create_fake_jpeg_tar(seed, min_num_images=5, max_num_images=50,
     images = []
     if filenames is None:
         files = []
+    elif len(filenames) < max_num_images:
+        raise ValueError('need at least max_num_images = %d filenames' %
+                         max_num_images)
     else:
-        if len(filenames) < max_num_images:
-            raise ValueError('need at least max_num_images = %d filenames' %
-                             max_num_images)
         files = filenames
     for i in xrange(rng.random_integers(min_num_images, max_num_images)):
         if filenames is None:
             max_len = 27  # so that with suffix, 32 characters
-            files.append('%s.JPEG' %
-                         hashlib.sha1(bytes(i + offset)).hexdigest()[:max_len])
+            files.append(f'{hashlib.sha1(bytes(i + offset)).hexdigest()[:max_len]}.JPEG')
         im = rng.random_integers(0, 255,
                                  size=(rng.random_integers(min_size,
                                                            min_size +
@@ -265,9 +264,8 @@ def create_fake_jpeg_tar(seed, min_num_images=5, max_num_images=50,
                 os.remove(f.name)
     ordered_files = []
     with tarfile.open(fileobj=io.BytesIO(temp_tar.getvalue()),
-                      mode='r') as tar:
-        for info in tar.getmembers():
-            ordered_files.append(info.name)
+                          mode='r') as tar:
+        ordered_files.extend(info.name for info in tar.getmembers())
     return temp_tar.getvalue(), ordered_files
 
 
@@ -306,8 +304,9 @@ def create_fake_tar_of_tars(seed, num_inner_tars, *args, **kwargs):
         tars.append(tar)
         fns.append(fn)
         offset += len(fn)
-    names = sorted(str(abs(hash(str(-i - 1)))) + '.tar'
-                   for i, t in enumerate(tars))
+    names = sorted(
+        f'{str(abs(hash(str(-i - 1))))}.tar' for i, t in enumerate(tars)
+    )
     data = io.BytesIO()
     with tarfile.open(fileobj=data, mode='w') as outer:
         for tar, name in zip(tars, names):
@@ -328,19 +327,21 @@ def create_fake_patch_images(filenames=None, num_train=14, num_valid=15,
         filenames = ['%x' % abs(hash(str(i))) + '.JPEG' for i in xrange(num)]
     else:
         filenames = list(filenames)  # Copy, so list not modified in-place.
-    filenames[:num_train] = ['train/' + f
-                             for f in filenames[:num_train]]
-    filenames[num_train:num_train + num_valid] = [
-        'val/' + f for f in filenames[num_train:num_train + num_valid]
+    filenames[:num_train] = [f'train/{f}' for f in filenames[:num_train]]
+    filenames[num_train : num_train + num_valid] = [
+        f'val/{f}' for f in filenames[num_train : num_train + num_valid]
     ]
-    filenames[num_train + num_valid:] = [
-        'test/' + f for f in filenames[num_train + num_valid:]
+    filenames[num_train + num_valid :] = [
+        f'test/{f}' for f in filenames[num_train + num_valid :]
     ]
-    tar = create_fake_jpeg_tar(1, min_num_images=len(filenames),
-                               max_num_images=len(filenames),
-                               filenames=filenames, random=False,
-                               gzip_probability=0.0)[0]
-    return tar
+    return create_fake_jpeg_tar(
+        1,
+        min_num_images=len(filenames),
+        max_num_images=len(filenames),
+        filenames=filenames,
+        random=False,
+        gzip_probability=0.0,
+    )[0]
 
 
 def test_prepare_metadata():
@@ -370,20 +371,25 @@ def test_prepare_hdf5_file():
     # Verify properties of the train split.
     train_splits = get_start_stop(hdf5_file, 'train')
     assert all(v == (0, 10) for v in train_splits.values())
-    assert set(train_splits.keys()) == set([u'encoded_images', u'targets',
-                                            u'filenames'])
+    assert set(train_splits.keys()) == {
+        u'encoded_images',
+        u'targets',
+        u'filenames',
+    }
 
     # Verify properties of the valid split.
     valid_splits = get_start_stop(hdf5_file, 'valid')
     assert all(v == (10, 15) for v in valid_splits.values())
-    assert set(valid_splits.keys()) == set([u'encoded_images', u'targets',
-                                            u'filenames'])
+    assert set(valid_splits.keys()) == {
+        u'encoded_images',
+        u'targets',
+        u'filenames',
+    }
 
     # Verify properties of the test split.
     test_splits = get_start_stop(hdf5_file, 'test')
     assert all(v == (15, 17) for v in test_splits.values())
-    assert set(test_splits.keys()) == set([u'encoded_images', u'targets',
-                                           u'filenames'])
+    assert set(test_splits.keys()) == {u'encoded_images', u'targets', u'filenames'}
 
     from numpy import dtype
 
@@ -426,8 +432,9 @@ def test_process_train_set():
     # Other tests cover that the actual images are what they should be.
     # Just do a basic verification of the filenames and targets.
 
-    assert set(all_jpegs) == set(s.decode('ascii')
-                                 for s in hdf5_file['filenames'][:, 0])
+    assert set(all_jpegs) == {
+        s.decode('ascii') for s in hdf5_file['filenames'][:, 0]
+    }
     assert len(hdf5_file['encoded_images'][:]) == len(all_jpegs)
     assert len(hdf5_file['targets'][:]) == len(all_jpegs)
 
@@ -537,17 +544,16 @@ def test_images_consumer_randomized():
     prepare_hdf5_file(hdf5_file, 4, 5, 8)
     socket = MockSocket(zmq.PULL, to_recv=mock_messages)
     image_consumer(socket, hdf5_file, 5, offset=4, shuffle_seed=0)
-    written_data = set(tuple(s) for s in hdf5_file['encoded_images'][4:9])
-    expected_data = set(tuple(s['data']) for s in mock_messages[1::2])
+    written_data = {tuple(s) for s in hdf5_file['encoded_images'][4:9]}
+    expected_data = {tuple(s['data']) for s in mock_messages[1::2]}
     assert written_data == expected_data
 
     written_targets = set(hdf5_file['targets'][4:9].flatten())
-    expected_targets = set(s['obj'][1] for s in mock_messages[::2])
+    expected_targets = {s['obj'][1] for s in mock_messages[::2]}
     assert written_targets == expected_targets
 
     written_filenames = set(hdf5_file['filenames'][4:9].flatten())
-    expected_filenames = set(s['obj'][0].encode('ascii')
-                             for s in mock_messages[::2])
+    expected_filenames = {s['obj'][0].encode('ascii') for s in mock_messages[::2]}
     assert written_filenames == expected_filenames
 
 

@@ -25,10 +25,7 @@ from fuel.downloaders.caltech101_silhouettes import silhouettes_downloader
 from fuel.downloaders.base import default_downloader
 from fuel.utils import remember_cwd
 
-if six.PY3:
-    getbuffer = memoryview
-else:
-    getbuffer = numpy.getbuffer
+getbuffer = memoryview if six.PY3 else numpy.getbuffer
 
 
 class TestFillHDF5File(object):
@@ -360,10 +357,11 @@ class TestCIFAR10(object):
         numpy.random.seed(9 + 5 + 2015)
         self.train_features_mock = [
             numpy.random.randint(0, 256, (10, 3, 32, 32)).astype('uint8')
-            for i in range(5)]
+            for _ in range(5)
+        ]
         self.train_targets_mock = [
-            numpy.random.randint(0, 10, (10,)).astype('uint8')
-            for i in range(5)]
+            numpy.random.randint(0, 10, (10,)).astype('uint8') for _ in range(5)
+        ]
         self.test_features_mock = numpy.random.randint(
             0, 256, (10, 3, 32, 32)).astype('uint8')
         self.test_targets_mock = numpy.random.randint(
@@ -374,8 +372,7 @@ class TestCIFAR10(object):
             os.mkdir('cifar-10-batches-py')
             for i, (x, y) in enumerate(zip(self.train_features_mock,
                                            self.train_targets_mock)):
-                filename = os.path.join(
-                    'cifar-10-batches-py', 'data_batch_{}'.format(i + 1))
+                filename = os.path.join('cifar-10-batches-py', f'data_batch_{i + 1}')
                 with open(filename, 'wb') as f:
                     cPickle.dump({'data': x, 'labels': y}, f)
             filename = os.path.join('cifar-10-batches-py', 'test_batch')
@@ -525,7 +522,7 @@ class TestCalTech101Silhouettes(object):
             caltech101_silhouettes.convert_silhouettes(
                 size=size, directory=tempdir, output_directory=tempdir)
 
-        output_file = "caltech101_silhouettes{}.hdf5".format(size)
+        output_file = f"caltech101_silhouettes{size}.hdf5"
         output_file = os.path.join(tempdir, output_file)
 
         with h5py.File(output_file, 'r') as h5:

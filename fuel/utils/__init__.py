@@ -21,10 +21,7 @@ def remember_cwd():
 
 
 # See http://python3porting.com/differences.html#buffer
-if six.PY3:
-    buffer_ = memoryview
-else:
-    buffer_ = buffer  # noqa
+buffer_ = memoryview if six.PY3 else buffer
 
 
 class Subset(object):
@@ -96,7 +93,7 @@ class Subset(object):
         other_start, other_stop, other_step = other_sss
         # In case of overlap, the solution is to choose the smallest start
         # value and largest stop value.
-        if not (self_stop < other_start or self_start > other_stop):
+        if self_stop >= other_start and self_start <= other_stop:
             return self.__class__(slice(min(self_start, other_start),
                                         max(self_stop, other_stop),
                                         self_step),
@@ -291,20 +288,18 @@ class Subset(object):
         """The number of examples this subset spans."""
         if self.is_list:
             return len(self.list_or_slice)
-        else:
-            start, stop, step = self.slice_to_numerical_args(
-                self.list_or_slice, self.original_num_examples)
-            return stop - start
+        start, stop, step = self.slice_to_numerical_args(
+            self.list_or_slice, self.original_num_examples)
+        return stop - start
 
     @property
     def is_empty(self):
         """Whether this subset is empty."""
         if self.is_list:
             return len(self.list_or_slice) == 0
-        else:
-            start, stop, step = self.slice_to_numerical_args(
-                self.list_or_slice, self.original_num_examples)
-            return stop - start == 0
+        start, stop, step = self.slice_to_numerical_args(
+            self.list_or_slice, self.original_num_examples)
+        return stop - start == 0
 
     def _subset_sanity_check(self, list_or_slice, num_examples):
         if self._is_list(list_or_slice):
@@ -431,20 +426,20 @@ def find_in_data_path(filename):
         file_path = os.path.join(path, filename)
         if os.path.isfile(file_path):
             return file_path
-    raise IOError("{} not found in Fuel's data path".format(filename))
+    raise IOError(f"{filename} not found in Fuel's data path")
 
 
 def lazy_property_factory(lazy_property):
     """Create properties that perform lazy loading of attributes."""
     def lazy_property_getter(self):
-        if not hasattr(self, '_' + lazy_property):
+        if not hasattr(self, f'_{lazy_property}'):
             self.load()
-        if not hasattr(self, '_' + lazy_property):
+        if not hasattr(self, f'_{lazy_property}'):
             raise ValueError("{} wasn't loaded".format(lazy_property))
-        return getattr(self, '_' + lazy_property)
+        return getattr(self, f'_{lazy_property}')
 
     def lazy_property_setter(self, value):
-        setattr(self, '_' + lazy_property, value)
+        setattr(self, f'_{lazy_property}', value)
 
     return lazy_property_getter, lazy_property_setter
 
@@ -501,13 +496,15 @@ def do_not_pickle_attributes(*lazy_properties):
             def __getstate__(self):
                 serializable_state = self.__dict__.copy()
                 for lazy_property in lazy_properties:
-                    attr = serializable_state.get('_' + lazy_property)
+                    attr = serializable_state.get(f'_{lazy_property}')
                     # Iterators would lose their state
                     if isinstance(attr, collections.Iterator):
                         raise ValueError("Iterators can't be lazy loaded")
-                    serializable_state.pop('_' + lazy_property, None)
+                    serializable_state.pop(f'_{lazy_property}', None)
                 return serializable_state
+
             setattr(cls, '__getstate__', __getstate__)
 
         return cls
+
     return wrap_class

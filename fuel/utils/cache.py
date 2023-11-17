@@ -99,20 +99,17 @@ def cache_file(filename):
                   "FUEL_LOCAL_DATA_PATH): ")
     # Make sure the file to cache exists and really is a file
     if not os.path.exists(remote_name):
-        log.error(
-            "Error : Specified file {} does not exist".format(remote_name))
+        log.error(f"Error : Specified file {remote_name} does not exist")
         return filename
 
     if not os.path.isfile(remote_name):
-        log.error(
-            "Error : Specified name {} is not a file".format(remote_name))
+        log.error(f"Error : Specified name {remote_name} is not a file")
         return filename
 
     if not remote_name.startswith(dataset_remote_dir):
         log.warning(
-            common_msg +
-            "We cache in the local directory only what is"
-            " under $FUEL_DATA_PATH: {}".format(remote_name))
+            f"{common_msg}We cache in the local directory only what is under $FUEL_DATA_PATH: {remote_name}"
+        )
         return filename
 
     # Create the $FUEL_LOCAL_DATA_PATH folder if needed
@@ -143,12 +140,9 @@ def cache_file(filename):
     # it forces the current process to wait for it to be done before
     # using the file.
     if not os.access(local_folder, os.W_OK):
-        log.warning(common_msg +
-                    "Local folder {} isn't writable."
-                    " This is needed for synchronization."
-                    " We will use the remote version."
-                    " Manually fix the permission."
-                    .format(local_folder))
+        log.warning(
+            f"{common_msg}Local folder {local_folder} isn't writable. This is needed for synchronization. We will use the remote version. Manually fix the permission."
+        )
         return filename
     get_writelock(local_name)
 
@@ -158,17 +152,18 @@ def cache_file(filename):
         # Check that there is enough space to cache the file
         if not check_enough_space(dataset_local_dir, remote_name,
                                   local_name):
-            log.warning(common_msg +
-                        "File {} not cached: Not enough free space"
-                        .format(remote_name))
+            log.warning(
+                f"{common_msg}File {remote_name} not cached: Not enough free space"
+            )
             release_writelock()
             return filename
 
         # There is enough space; make a local copy of the file
         copy_from_server_to_local(dataset_remote_dir, dataset_local_dir,
                                   remote_name, local_name)
-        log.info(common_msg + "File {} has been locally cached to {}"
-                 .format(remote_name, local_name))
+        log.info(
+            f"{common_msg}File {remote_name} has been locally cached to {local_name}"
+        )
     elif os.path.getmtime(remote_name) > os.path.getmtime(local_name):
         remote_modified_time = time.strftime(
             '%Y-%m-%d %H:%M:%S',
@@ -176,33 +171,27 @@ def cache_file(filename):
         local_modified_time = time.strftime(
             '%Y-%m-%d %H:%M:%S',
             time.localtime(os.path.getmtime(local_name)))
-        log.warning(common_msg +
-                    "File {} in cache will not be used: The remote file "
-                    "(modified {}) is newer than the locally cached file "
-                    "{} (modified {})."
-                    .format(remote_name, remote_modified_time,
-                            local_name, local_modified_time))
+        log.warning(
+            f"{common_msg}File {remote_name} in cache will not be used: The remote file (modified {remote_modified_time}) is newer than the locally cached file {local_name} (modified {local_modified_time})."
+        )
         release_writelock()
         return filename
     elif os.path.getsize(local_name) != os.path.getsize(remote_name):
-        log.warning(common_msg +
-                    "File {} not cached: The remote file ({} bytes) is of "
-                    "a different size than the locally cached file {} "
-                    "({} bytes). The local cache might be corrupt."
-                    .format(remote_name, os.path.getsize(remote_name),
-                            local_name, os.path.getsize(local_name)))
+        log.warning(
+            f"{common_msg}File {remote_name} not cached: The remote file ({os.path.getsize(remote_name)} bytes) is of a different size than the locally cached file {local_name} ({os.path.getsize(local_name)} bytes). The local cache might be corrupt."
+        )
         release_writelock()
         return filename
     elif not os.access(local_name, os.R_OK):
-        log.warning(common_msg +
-                    "File {} in cache isn't readable. We will use the"
-                    " remote version. Manually fix the permission."
-                    .format(local_name))
+        log.warning(
+            f"{common_msg}File {local_name} in cache isn't readable. We will use the remote version. Manually fix the permission."
+        )
         release_writelock()
         return filename
     else:
-        log.debug("File {} has previously been locally cached to {}"
-                  .format(remote_name, local_name))
+        log.debug(
+            f"File {remote_name} has previously been locally cached to {local_name}"
+        )
 
     # Obtain a readlock on the downloaded file before releasing the
     # writelock. This is to prevent having a moment where there is no
@@ -226,8 +215,9 @@ def copy_from_server_to_local(dataset_remote_dir, dataset_local_dir,
         Path and name of the local copy to be made of the remote file.
 
     """
-    log.debug("Copying file `{}` to a local directory `{}`."
-              .format(remote_fname, dataset_local_dir))
+    log.debug(
+        f"Copying file `{remote_fname}` to a local directory `{dataset_local_dir}`."
+    )
 
     head, tail = os.path.split(local_fname)
     head += os.path.sep

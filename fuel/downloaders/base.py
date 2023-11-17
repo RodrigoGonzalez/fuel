@@ -23,11 +23,18 @@ def progress_bar(name, maxval):
 
     """
     if maxval is not UnknownLength:
-        widgets = ['{}: '.format(name), Percentage(), ' ',
-                   Bar(marker='=', left='[', right=']'), ' ', ETA(), ' ',
-                   FileTransferSpeed()]
+        widgets = [
+            f'{name}: ',
+            Percentage(),
+            ' ',
+            Bar(marker='=', left='[', right=']'),
+            ' ',
+            ETA(),
+            ' ',
+            FileTransferSpeed(),
+        ]
     else:
-        widgets = ['{}: '.format(name), ' ', Timer(), ' ', FileTransferSpeed()]
+        widgets = [f'{name}: ', ' ', Timer(), ' ', FileTransferSpeed()]
     bar = ProgressBar(widgets=widgets, max_value=maxval, fd=sys.stdout).start()
     try:
         yield bar
@@ -46,12 +53,13 @@ def filename_from_url(url, path=None):
 
     """
     r = requests.get(url, stream=True)
-    if 'Content-Disposition' in r.headers:
-        filename = re.findall(r'filename=([^;]+)',
-                              r.headers['Content-Disposition'])[0].strip('"\"')
-    else:
-        filename = os.path.basename(urllib.parse.urlparse(url).path)
-    return filename
+    return (
+        re.findall(r'filename=([^;]+)', r.headers['Content-Disposition'])[
+            0
+        ].strip('"\"')
+        if 'Content-Disposition' in r.headers
+        else os.path.basename(urllib.parse.urlparse(url).path)
+    )
 
 
 def download(url, file_handle, chunk_size=1024):
@@ -67,10 +75,7 @@ def download(url, file_handle, chunk_size=1024):
     """
     r = requests.get(url, stream=True)
     total_length = r.headers.get('content-length')
-    if total_length is None:
-        maxval = UnknownLength
-    else:
-        maxval = int(total_length)
+    maxval = UnknownLength if total_length is None else int(total_length)
     name = file_handle.name
     with progress_bar(name=name, maxval=maxval) as bar:
         for i, chunk in enumerate(r.iter_content(chunk_size)):
@@ -119,7 +124,7 @@ def default_downloader(directory, urls, filenames, url_prefix=None,
         if not filename:
             filename = filename_from_url(url)
         if not filename:
-            raise ValueError("no filename available for URL '{}'".format(url))
+            raise ValueError(f"no filename available for URL '{url}'")
         filenames[i] = filename
     files = [os.path.join(directory, f) for f in filenames]
 

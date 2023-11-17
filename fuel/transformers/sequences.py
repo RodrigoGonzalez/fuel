@@ -42,8 +42,7 @@ class Window(Transformer):
             raise ValueError('the wrapped data stream must produce examples, '
                              'not batches of examples.')
         if len(data_stream.sources) > 1:
-            raise ValueError('{} expects only one source'
-                             .format(self.__class__.__name__))
+            raise ValueError(f'{self.__class__.__name__} expects only one source')
 
         super(Window, self).__init__(data_stream, produces_examples=True,
                                      **kwargs)
@@ -76,7 +75,7 @@ class Window(Transformer):
     def get_data(self, request=None):
         if request is not None:
             raise ValueError
-        while not self._get_end_index() <= len(self.sentence):
+        while self._get_end_index() > len(self.sentence):
             self.sentence, = next(self.child_epoch_iterator)
             self._set_index()
         source = self.sentence[self.index:self.index + self.source_window]

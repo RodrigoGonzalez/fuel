@@ -217,9 +217,11 @@ class H5PYDataset(Dataset):
         for split in which_sets:
             if split not in available_splits:
                 raise ValueError(
-                    "'{}' split is not provided by this ".format(split) +
-                    "dataset. Available splits are " +
-                    "{}.".format(available_splits))
+                    (
+                        f"'{split}' split is not provided by this dataset. Available splits are "
+                        + f"{available_splits}."
+                    )
+                )
             split_provides_sources = set(
                 self.get_provided_sources(handle, split))
             if provides_sources:
@@ -314,9 +316,7 @@ class H5PYDataset(Dataset):
             Names of all splits in ``h5file``.
 
         """
-        available_splits = tuple(
-            set(row['split'].decode('utf8') for row in h5file.attrs['split']))
-        return available_splits
+        return tuple({row['split'].decode('utf8') for row in h5file.attrs['split']})
 
     @staticmethod
     def get_all_sources(h5file):
@@ -333,9 +333,7 @@ class H5PYDataset(Dataset):
             Names of all sources in ``h5file``.
 
         """
-        all_sources = tuple(
-            set(row['source'].decode('utf8') for row in h5file.attrs['split']))
-        return all_sources
+        return tuple({row['source'].decode('utf8') for row in h5file.attrs['split']})
 
     @staticmethod
     def get_provided_sources(h5file, split):
@@ -354,10 +352,11 @@ class H5PYDataset(Dataset):
             Names of sources provided by ``split`` in ``h5file``.
 
         """
-        provided_sources = tuple(
-            row['source'].decode('utf8') for row in h5file.attrs['split']
-            if row['split'].decode('utf8') == split and row['available'])
-        return provided_sources
+        return tuple(
+            row['source'].decode('utf8')
+            for row in h5file.attrs['split']
+            if row['split'].decode('utf8') == split and row['available']
+        )
 
     @staticmethod
     def get_vlen_sources(h5file):
@@ -535,7 +534,7 @@ class H5PYDataset(Dataset):
         elif self.path in self._file_handles:
             return self._file_handles[self.path]
         else:
-            raise IOError('no open handle for file {}'.format(self.path))
+            raise IOError(f'no open handle for file {self.path}')
 
     def get_data(self, state=None, request=None):
         if self.load_in_memory:

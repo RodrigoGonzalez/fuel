@@ -92,21 +92,16 @@ class TextFile(Dataset):
         self.files = files
         self.dictionary = dictionary
         if bos_token is not None and bos_token not in dictionary:
-            raise ValueError(
-                "BOS token '{}' is not in the dictionary".format(bos_token))
+            raise ValueError(f"BOS token '{bos_token}' is not in the dictionary")
         self.bos_token = bos_token
         if eos_token is not None and eos_token not in dictionary:
-            raise ValueError(
-                "EOS token '{}' is not in the dictionary".format(eos_token))
+            raise ValueError(f"EOS token '{eos_token}' is not in the dictionary")
         self.eos_token = eos_token
         if unk_token is not None and unk_token not in dictionary:
-            raise ValueError(
-                "UNK token '{}' is not in the dictionary".format(unk_token))
+            raise ValueError(f"UNK token '{unk_token}' is not in the dictionary")
         self.unk_token = unk_token
         if level not in ('word', 'character'):
-            raise ValueError(
-                "level should be 'word' or 'character', not '{}'"
-                .format(level))
+            raise ValueError(f"level should be 'word' or 'character', not '{level}'")
         self.level = level
         self.preprocess = preprocess
         self.encoding = encoding
@@ -120,11 +115,11 @@ class TextFile(Dataset):
         value = self.dictionary.get(symbol)
         if value is not None:
             return value
-        else:
-            if self.unk_token is None:
-                raise KeyError("token '{}' not found in dictionary and no "
-                               "`unk_token` given".format(symbol))
-            return self.dictionary[self.unk_token]
+        if self.unk_token is None:
+            raise KeyError(
+                f"token '{symbol}' not found in dictionary and no `unk_token` given"
+            )
+        return self.dictionary[self.unk_token]
 
     def get_data(self, state=None, request=None):
         if request is not None:

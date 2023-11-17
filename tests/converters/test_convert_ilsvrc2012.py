@@ -41,19 +41,25 @@ def test_prepare_hdf5_file():
     # Verify properties of the train split.
     train_splits = get_start_stop(hdf5_file, 'train')
     assert all(v == (0, 10) for v in train_splits.values())
-    assert set(train_splits.keys()) == set([u'encoded_images', u'targets',
-                                            u'filenames'])
+    assert set(train_splits.keys()) == {
+        u'encoded_images',
+        u'targets',
+        u'filenames',
+    }
 
     # Verify properties of the valid split.
     valid_splits = get_start_stop(hdf5_file, 'valid')
     assert all(v == (10, 15) for v in valid_splits.values())
-    assert set(valid_splits.keys()) == set([u'encoded_images', u'targets',
-                                            u'filenames'])
+    assert set(valid_splits.keys()) == {
+        u'encoded_images',
+        u'targets',
+        u'filenames',
+    }
 
     # Verify properties of the test split.
     test_splits = get_start_stop(hdf5_file, 'test')
     assert all(v == (15, 17) for v in test_splits.values())
-    assert set(test_splits.keys()) == set([u'encoded_images', u'filenames'])
+    assert set(test_splits.keys()) == {u'encoded_images', u'filenames'}
 
     from numpy import dtype
 

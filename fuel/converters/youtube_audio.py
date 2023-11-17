@@ -32,11 +32,10 @@ def convert_youtube_audio(directory, output_directory, youtube_id, channels,
         `youtube_id.hdf5` is used.
 
     """
-    input_file = os.path.join(directory, '{}.m4a'.format(youtube_id))
-    wav_filename = '{}.wav'.format(youtube_id)
+    input_file = os.path.join(directory, f'{youtube_id}.m4a')
+    wav_filename = f'{youtube_id}.wav'
     wav_file = os.path.join(directory, wav_filename)
-    ffmpeg_not_available = subprocess.call(['ffmpeg', '-version'])
-    if ffmpeg_not_available:
+    if ffmpeg_not_available := subprocess.call(['ffmpeg', '-version']):
         raise RuntimeError('conversion requires ffmpeg')
     subprocess.check_call(['ffmpeg', '-y', '-i', input_file, '-ac',
                            str(channels), '-ar', str(sample), wav_file],
@@ -50,7 +49,7 @@ def convert_youtube_audio(directory, output_directory, youtube_id, channels,
 
     # Store in HDF5
     if output_filename is None:
-        output_filename = '{}.hdf5'.format(youtube_id)
+        output_filename = f'{youtube_id}.hdf5'
     output_file = os.path.join(output_directory, output_filename)
 
     with h5py.File(output_file, 'w') as h5file:

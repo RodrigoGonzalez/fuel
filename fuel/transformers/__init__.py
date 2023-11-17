@@ -58,12 +58,10 @@ class ExpectsAxisLabels(object):
                 log.warning("%s instance could not verify (missing) axis "
                             "expected %s, got None",
                             self.__class__.__name__, expected)
-            else:
-                if expected != actual:
-                    raise AxisLabelsMismatchError("{} expected axis labels "
-                                                  "{}, got {} instead".format(
-                                                      self.__class__.__name__,
-                                                      expected, actual))
+            elif expected != actual:
+                raise AxisLabelsMismatchError(
+                    f"{self.__class__.__name__} expected axis labels {expected}, got {actual} instead"
+                )
             self._checked_axis_labels[source_name] = True
 
 
@@ -102,9 +100,7 @@ class Transformer(AbstractDataStream):
 
     @property
     def sources(self):
-        if hasattr(self, '_sources'):
-            return self._sources
-        return self.data_stream.sources
+        return self._sources if hasattr(self, '_sources') else self.data_stream.sources
 
     @sources.setter
     def sources(self, value):
@@ -141,11 +137,8 @@ class Transformer(AbstractDataStream):
         if self.produces_examples != self.data_stream.produces_examples:
             types = {True: 'examples', False: 'batches'}
             raise NotImplementedError(
-                "the wrapped data stream produces {} while the {} transformer "
-                "produces {}, which it does not support.".format(
-                    types[self.data_stream.produces_examples],
-                    self.__class__.__name__,
-                    types[self.produces_examples]))
+                f"the wrapped data stream produces {types[self.data_stream.produces_examples]} while the {self.__class__.__name__} transformer produces {types[self.produces_examples]}, which it does not support."
+            )
         elif self.produces_examples:
             return self.transform_example(data)
         else:
@@ -154,14 +147,14 @@ class Transformer(AbstractDataStream):
     def transform_example(self, example):
         """Transforms a single example."""
         raise NotImplementedError(
-            "`{}` does not support examples as input, but the wrapped data "
-            "stream produces examples.".format(self.__class__.__name__))
+            f"`{self.__class__.__name__}` does not support examples as input, but the wrapped data stream produces examples."
+        )
 
     def transform_batch(self, batch):
         """Transforms a batch of examples."""
         raise NotImplementedError(
-            "`{}` does not support batches as input, but the wrapped data "
-            "stream produces batches.".format(self.__class__.__name__))
+            f"`{self.__class__.__name__}` does not support batches as input, but the wrapped data stream produces batches."
+        )
 
 
 @add_metaclass(ABCMeta)
@@ -209,8 +202,9 @@ class Mapping(Transformer):
         super(Mapping, self).__init__(
             data_stream, data_stream.produces_examples, **kwargs)
         if mapping_accepts not in [list, dict]:
-            raise ValueError('`Mapping` can accept `list` or `dict`, not `{}`'
-                             .format(mapping_accepts))
+            raise ValueError(
+                f'`Mapping` can accept `list` or `dict`, not `{mapping_accepts}`'
+            )
 
         self.mapping_accepts = mapping_accepts
         self.mapping = mapping
@@ -233,9 +227,7 @@ class Mapping(Transformer):
         image_sources = self.add_sources if self.add_sources else self.sources
         if self.mapping_accepts == dict:
             image = tuple(image[source] for source in image_sources)
-        if self.add_sources:
-            return data + image
-        return image
+        return data + image if self.add_sources else image
 
 
 @add_metaclass(ABCMeta)
@@ -282,8 +274,8 @@ class SourcewiseTransformer(Transformer):
 
         """
         raise NotImplementedError(
-            "`{}` does not support examples as input, but the wrapped data "
-            "stream produces examples.".format(self.__class__.__name__))
+            f"`{self.__class__.__name__}` does not support examples as input, but the wrapped data stream produces examples."
+        )
 
     def transform_source_batch(self, source_batch, source_name):
         """Applies a transformation to a batch from a source.
@@ -297,8 +289,8 @@ class SourcewiseTransformer(Transformer):
 
         """
         raise NotImplementedError(
-            "`{}` does not support batches as input, but the wrapped data "
-            "stream produces batches.".format(self.__class__.__name__))
+            f"`{self.__class__.__name__}` does not support batches as input, but the wrapped data stream produces batches."
+        )
 
     def transform_example(self, example):
         return self._apply_sourcewise_transformation(
@@ -610,7 +602,7 @@ class Batch(Transformer):
         if request is None:
             raise ValueError
         data = [[] for _ in self.sources]
-        for i in range(request):
+        for _ in range(request):
             try:
                 for source_data, example in zip(
                         data, next(self.child_epoch_iterator)):
@@ -699,10 +691,7 @@ class Padding(Transformer):
         if mask_sources is None:
             mask_sources = self.data_stream.sources
         self.mask_sources = mask_sources
-        if mask_dtype is None:
-            self.mask_dtype = config.floatX
-        else:
-            self.mask_dtype = mask_dtype
+        self.mask_dtype = config.floatX if mask_dtype is None else mask_dtype
 
     @property
     def sources(self):
@@ -710,7 +699,7 @@ class Padding(Transformer):
         for source in self.data_stream.sources:
             sources.append(source)
             if source in self.mask_sources:
-                sources.append(source + '_mask')
+                sources.append(f'{source}_mask')
         return tuple(sources)
 
     def transform_batch(self, batch):
@@ -725,7 +714,7 @@ class Padding(Transformer):
             lengths = [shape[0] for shape in shapes]
             max_sequence_length = max(lengths)
             rest_shape = shapes[0][1:]
-            if not all([shape[1:] == rest_shape for shape in shapes]):
+            if any(shape[1:] != rest_shape for shape in shapes):
                 raise ValueError("All dimensions except length must be equal")
             dtype = numpy.asarray(source_batch[0]).dtype
 
@@ -772,9 +761,10 @@ class Merge(AbstractDataStream):
     def __init__(self, data_streams, sources, axis_labels=None):
         super(Merge, self).__init__(
             iteration_scheme=None, axis_labels=axis_labels)
-        if not all(data_stream.produces_examples ==
-                   data_streams[0].produces_examples
-                   for data_stream in data_streams):
+        if any(
+            data_stream.produces_examples != data_streams[0].produces_examples
+            for data_stream in data_streams
+        ):
             raise ValueError('all data streams must produce the same type of '
                              'output (batches or examples)')
         self.data_streams = data_streams
@@ -922,29 +912,26 @@ class Rename(AgnosticTransformer):
         for old, new in iteritems(names):
             if new in sources_lookup and new not in names:
                 if old in usable_names:
-                    message = ("Renaming source '{}' to '{}' "
-                               "would create two sources named '{}'"
-                               .format(old, new, new))
+                    message = f"Renaming source '{old}' to '{new}' would create two sources named '{new}'"
                     raise KeyError(message)
             if old not in sources_lookup:
-                message = ("Renaming source '{}' to '{}': "
-                           "stream does not provide a source '{}'"
-                           .format(old, new, old))
+                message = f"Renaming source '{old}' to '{new}': stream does not provide a source '{old}'"
                 if on_non_existent == 'raise':
                     raise KeyError(message)
-                else:
-                    log_level = {'warn': logging.WARNING,
-                                 'ignore': logging.DEBUG}
-                    log.log(log_level[on_non_existent], message)
+                log_level = {'warn': logging.WARNING,
+                             'ignore': logging.DEBUG}
+                log.log(log_level[on_non_existent], message)
             else:
                 sources[sources_lookup[old]] = new
         self.sources = tuple(sources)
         if data_stream.axis_labels:
             kwargs.setdefault(
                 'axis_labels',
-                dict((names[source] if source in names else source, labels)
-                     for (source, labels) in
-                     iteritems(data_stream.axis_labels)))
+                {
+                    names[source] if source in names else source: labels
+                    for (source, labels) in iteritems(data_stream.axis_labels)
+                },
+            )
         super(Rename, self).__init__(
             data_stream, data_stream.produces_examples, **kwargs)
 
@@ -972,10 +959,14 @@ class FilterSources(AgnosticTransformer):
             raise ValueError("sources must all be contained in "
                              "data_stream.sources")
         if data_stream.axis_labels:
-            kwargs.setdefault('axis_labels',
-                              dict((source, labels) for (source, labels)
-                                   in iteritems(data_stream.axis_labels)
-                                   if source in sources))
+            kwargs.setdefault(
+                'axis_labels',
+                {
+                    source: labels
+                    for (source, labels) in iteritems(data_stream.axis_labels)
+                    if source in sources
+                },
+            )
         super(FilterSources, self).__init__(
             data_stream, data_stream.produces_examples, **kwargs)
 

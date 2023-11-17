@@ -43,17 +43,17 @@ class OneBillionWord(TextFile):
         if which_set not in ('training', 'heldout'):
             raise ValueError
         if which_set == 'training':
-            if not all(partition in range(1, 100)
-                       for partition in which_partitions):
+            if any(
+                partition not in range(1, 100) for partition in which_partitions
+            ):
                 raise ValueError
             files = [find_in_data_path(os.path.join(
                 '1-billion-word', 'training-monolingual.tokenized.shuffled',
                 'news.en-{:05d}-of-00100'.format(partition)))
                 for partition in which_partitions]
+        elif any(partition not in range(50) for partition in which_partitions):
+            raise ValueError
         else:
-            if not all(partition in range(50)
-                       for partition in which_partitions):
-                raise ValueError
             files = [find_in_data_path(os.path.join(
                 '1-billion-word', 'heldout-monolingual.tokenized.shuffled',
                 'news.en.heldout-{:05d}-of-00050'.format(partition)))

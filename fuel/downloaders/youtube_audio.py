@@ -26,13 +26,13 @@ def download(directory, youtube_id, clear=False):
         it. Defaults to `False`.
 
     """
-    filepath = os.path.join(directory, '{}.m4a'.format(youtube_id))
+    filepath = os.path.join(directory, f'{youtube_id}.m4a')
     if clear:
         os.remove(filepath)
         return
     if not PAFY_AVAILABLE:
         raise ImportError("pafy is required to download YouTube videos")
-    url = 'https://www.youtube.com/watch?v={}'.format(youtube_id)
+    url = f'https://www.youtube.com/watch?v={youtube_id}'
     video = pafy.new(url)
     audio = video.getbestaudio()
     audio.download(quiet=False, filepath=filepath)

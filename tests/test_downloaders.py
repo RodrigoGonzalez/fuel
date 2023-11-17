@@ -99,7 +99,7 @@ def test_mnist():
     args = parser.parse_args(['mnist'])
     filenames = ['train-images-idx3-ubyte.gz', 'train-labels-idx1-ubyte.gz',
                  't10k-images-idx3-ubyte.gz', 't10k-labels-idx1-ubyte.gz']
-    urls = ['http://yann.lecun.com/exdb/mnist/' + f for f in filenames]
+    urls = [f'http://yann.lecun.com/exdb/mnist/{f}' for f in filenames]
     assert_equal(args.filenames, filenames)
     assert_equal(args.urls, urls)
     assert download_function is default_downloader
@@ -127,9 +127,11 @@ def test_binarized_mnist():
         subparsers.add_parser('binarized_mnist'))
     args = parser.parse_args(['binarized_mnist'])
     sets = ['train', 'valid', 'test']
-    urls = ['http://www.cs.toronto.edu/~larocheh/public/datasets/' +
-            'binarized_mnist/binarized_mnist_{}.amat'.format(s) for s in sets]
-    filenames = ['binarized_mnist_{}.amat'.format(s) for s in sets]
+    urls = [
+        f'http://www.cs.toronto.edu/~larocheh/public/datasets/binarized_mnist/binarized_mnist_{s}.amat'
+        for s in sets
+    ]
+    filenames = [f'binarized_mnist_{s}.amat' for s in sets]
     assert_equal(args.filenames, filenames)
     assert_equal(args.urls, urls)
     assert download_function is default_downloader

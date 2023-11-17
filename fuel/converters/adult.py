@@ -85,10 +85,14 @@ def convert_adult(directory, output_directory,
             'marital-status', 'occupation', 'relationship', 'race', 'sex',
             'capital-gain', 'capital-loss', 'hours-per-week', 'native-country'
         ]
-        continuous = set([
-            'age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss',
-            'hours-per-week'
-        ])
+        continuous = {
+            'age',
+            'fnlwgt',
+            'education-num',
+            'capital-gain',
+            'capital-loss',
+            'hours-per-week',
+        }
 
         pieces = []
         for i, var in enumerate(variables):

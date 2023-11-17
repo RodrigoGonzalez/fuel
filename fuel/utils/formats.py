@@ -26,23 +26,19 @@ def open_(filename, mode='r', encoding=None):
     https://docs.python.org/3/library/codecs.html#standard-encodings
 
     """
-    if filename.endswith('.gz'):
-        if six.PY2:
-            zf = io.BufferedReader(gzip.open(filename, mode))
-            if encoding:
-                return codecs.getreader(encoding)(zf)
-            else:
-                return zf
-        else:
-            return io.BufferedReader(gzip.open(filename, mode,
-                                               encoding=encoding))
     if six.PY2:
-        if encoding:
-            return codecs.open(filename, mode, encoding=encoding)
-        else:
-            return open(filename, mode)
-    else:
+        if filename.endswith('.gz'):
+            zf = io.BufferedReader(gzip.open(filename, mode))
+            return codecs.getreader(encoding)(zf) if encoding else zf
+    elif filename.endswith('.gz'):
+        return io.BufferedReader(gzip.open(filename, mode,
+                                           encoding=encoding))
+    if not six.PY2:
         return open(filename, mode, encoding=encoding)
+    if encoding:
+        return codecs.open(filename, mode, encoding=encoding)
+    else:
+        return open(filename, mode)
 
 
 def tar_open(f):

@@ -34,7 +34,7 @@ def main(args=None):
         for name in fuel.config.extra_downloaders:
             extra_datasets = dict(
                 importlib.import_module(name).all_downloaders)
-            if any(key in built_in_datasets for key in extra_datasets.keys()):
+            if any(key in built_in_datasets for key in extra_datasets):
                 raise ValueError('extra downloaders conflict in name with '
                                  'built-in downloaders')
             built_in_datasets.update(extra_datasets)
@@ -50,8 +50,8 @@ def main(args=None):
     download_functions = {}
     for name, fill_subparser in built_in_datasets.items():
         subparser = subparsers.add_parser(
-            name, parents=[parent_parser],
-            help='Download the {} dataset'.format(name))
+            name, parents=[parent_parser], help=f'Download the {name} dataset'
+        )
         # Allows the parser to know which subparser was called.
         subparser.set_defaults(which_=name)
         download_functions[name] = fill_subparser(subparser)

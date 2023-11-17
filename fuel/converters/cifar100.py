@@ -61,10 +61,7 @@ def convert_cifar100(directory, output_directory,
 
     file = tar_file.extractfile('cifar-100-python/test')
     try:
-        if six.PY3:
-            test = cPickle.load(file, encoding='latin1')
-        else:
-            test = cPickle.load(file)
+        test = cPickle.load(file, encoding='latin1') if six.PY3 else cPickle.load(file)
     finally:
         file.close()
 

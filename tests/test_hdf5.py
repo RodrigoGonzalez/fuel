@@ -290,8 +290,7 @@ class TestH5PYDataset(object):
             h5file, which_sets=('train',), load_in_memory=False)
         handle = dataset.open()
         request = slice(0, 5)
-        assert_equal(
-            dataset.get_data(handle, request)[0], features[0:10:2])
+        assert_equal(dataset.get_data(handle, request)[0], features[:10:2])
         assert_equal(dataset.num_examples, 5)
         dataset.close(handle)
 
@@ -313,8 +312,7 @@ class TestH5PYDataset(object):
             h5file, which_sets=('train',), load_in_memory=True)
         handle = dataset.open()
         request = slice(0, 5)
-        assert_equal(
-            dataset.get_data(handle, request)[0], features[0:10:2])
+        assert_equal(dataset.get_data(handle, request)[0], features[:10:2])
         assert_equal(dataset.num_examples, 5)
         dataset.close(handle)
 

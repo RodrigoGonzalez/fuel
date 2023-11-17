@@ -113,7 +113,7 @@ def start_server(data_stream, port=5557, hwm=10):
     context = zmq.Context()
     socket = context.socket(zmq.PUSH)
     socket.set_hwm(hwm)
-    socket.bind('tcp://*:{}'.format(port))
+    socket.bind(f'tcp://*:{port}')
 
     it = data_stream.get_epoch_iterator()
 
@@ -122,7 +122,7 @@ def start_server(data_stream, port=5557, hwm=10):
         try:
             data = next(it)
             stop = False
-            logger.debug("sending {} arrays".format(len(data)))
+            logger.debug(f"sending {len(data)} arrays")
         except StopIteration:
             it = data_stream.get_epoch_iterator()
             data = None
